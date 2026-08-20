@@ -1,0 +1,192 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Packages
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ============================================================
+% Page Setup & Layout
+% ============================================================
+
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=14.5pt
+}
+
+\definecolor{arenaBlue}{RGB}{24, 85, 144}
+\definecolor{codebg}{RGB}{247, 249, 250}
+\definecolor{codegreen}{RGB}{40, 140, 60}
+\definecolor{codegray}{RGB}{100, 100, 100}
+\definecolor{codeblue}{RGB}{20, 70, 160}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=arenaBlue,
+    urlcolor=arenaBlue,
+    citecolor=arenaBlue
+}
+
+% ============================================================
+% Header / Footer Configuration
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\lhead{\textbf{Algorithm Arena}}
+\rhead{Evaluation Specification: \problemname}
+
+\cfoot{\thepage}
+
+% ============================================================
+% Custom Problem Metadata Definitions
+% ============================================================
+
+\newcommand{\problemname}{[Problem Title]}
+\newcommand{\shortname}{[problem-slug]}
+\newcommand{\problemversion}{1.0.0}
+\newcommand{\problemauthor}{[Author Name / Team]}
+\newcommand{\problemdate}{\today}
+
+% ============================================================
+% Document Content
+% ============================================================
+
+\begin{document}
+
+% ------------------------------------------------------------
+% Title Page
+% ------------------------------------------------------------
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+
+    \centering
+    \vspace*{1.0cm}
+
+    {\Large\textbf{\color{arenaBlue}ALGORITHM ARENA}}\\[0.4cm]
+    {\color{codegray!60}\rule{0.5\textwidth}{0.8pt}}\\[1.2cm]
+
+    {\fontsize{26}{34}\selectfont\textbf{\problemname}}\\[0.4cm]
+    {\Large\color{arenaBlue}\textbf{Match Protocol and Tournament Evaluation}}\\[1.2cm]
+
+    {\large\textsc{Document B: Arena and Evaluation Specification}}\\[1.5cm]
+
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Problem Identifier:} & \shortname \\
+        \textbf{Specification Level:}& Document B (Evaluation and Match Protocol) \\
+        \textbf{Version:}            & \problemversion \\
+        \textbf{Author:}             & \problemauthor \\
+        \textbf{Date:}               & \problemdate \\
+        \bottomrule
+    \end{tabular}
+
+    \vfill
+
+    \parbox{0.85\textwidth}{
+        \centering\textit{
+            Standard Document B template specifying controller protocols,
+            match loops, tournament rules, baseline algorithms, and scoring systems.
+        }
+    }
+
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+% ------------------------------------------------------------
+% Table of Contents
+% ------------------------------------------------------------
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ============================================================
+% 1. Overview
+% ============================================================
+
+\section{Overview}
+Define the matchmaking scope, controller execution model, and evaluation goals.
+
+% ============================================================
+% 2. Controller Protocol & Language Adapters
+% ============================================================
+
+\section{Controller Protocol}
+
+\subsection{Lifecycle Methods}
+\begin{itemize}
+    \item \texttt{initialize()}: Process setup and static resource loading.
+    \item \texttt{reset()}: Memory cleanup before each match.
+    \item \texttt{step(observation)}: Synchronous action dispatch.
+\end{itemize}
+
+\subsection{Observation and Action Contracts}
+Data types and ranges for input and output.
+
+% ============================================================
+% 3. Match Protocol
+% ============================================================
+
+\section{Match Protocol}
+
+\subsection{Horizon and Termination}
+Step bounds $T$ and early stopping conditions.
+
+\subsection{Error Handling and Fallbacks}
+Behavior on timeouts, unhandled exceptions, and invalid actions.
+
+% ============================================================
+% 4. Randomness & Deterministic Reproducibility
+% ============================================================
+
+\section{Randomness and Reproducibility}
+
+\subsection{Seed Hierarchy}
+Hierarchical derivation from $\text{Seed}_{\text{match}}$ to environment and controller PRNGs.
+
+\subsection{Determinism Contract}
+Given the same seed and code, output must be 100\% reproducible.
+
+% ============================================================
+% 5. Tournament & Scoring
+% ============================================================
+
+\section{Tournament Format and Scoring}
+
+\subsection{Matchmaking Format}
+Round-robin, Swiss system, or benchmark ladder.
+
+\subsection{Ranking Metrics and Tie-Breaking}
+Primary and secondary leaderboard criteria.
+
+% ============================================================
+% 6. Baseline Opponents
+% ============================================================
+
+\section{Benchmark Baseline Suite}
+Descriptions of reference baseline opponents (Naive, Standard, Strong).
+
+\end{document}

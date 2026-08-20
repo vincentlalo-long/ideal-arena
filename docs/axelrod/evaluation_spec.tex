@@ -1,0 +1,392 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Packages
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ============================================================
+% Page Setup & Layout
+% ============================================================
+
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=14.5pt
+}
+
+\definecolor{arenaBlue}{RGB}{24, 85, 144}
+\definecolor{codebg}{RGB}{247, 249, 250}
+\definecolor{codegreen}{RGB}{40, 140, 60}
+\definecolor{codegray}{RGB}{100, 100, 100}
+\definecolor{codeblue}{RGB}{20, 70, 160}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=arenaBlue,
+    urlcolor=arenaBlue,
+    citecolor=arenaBlue
+}
+
+% ============================================================
+% Header / Footer Configuration
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\lhead{\textbf{Algorithm Arena}}
+\rhead{Evaluation Specification: Axelrod IPD}
+
+\cfoot{\thepage}
+
+% ============================================================
+% Code Listings Style
+% ============================================================
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen}\itshape,
+    stringstyle=\color{arenaBlue},
+    numberstyle=\tiny\color{codegray},
+    numbers=left,
+    numbersep=8pt,
+    breaklines=true,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{codegray!40},
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+% ============================================================
+% Custom Problem Metadata Definitions
+% ============================================================
+
+\newcommand{\problemname}{Iterated Prisoner's Dilemma}
+\newcommand{\shortname}{axelrod-ipd}
+\newcommand{\problemversion}{1.0.0}
+\newcommand{\problemdate}{August 2026}
+
+% ============================================================
+% Document Content
+% ============================================================
+
+\begin{document}
+
+% ------------------------------------------------------------
+% Title Page
+% ------------------------------------------------------------
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+
+    \centering
+    \vspace*{1.0cm}
+
+    {\Large\textbf{\color{arenaBlue}ALGORITHM ARENA}}\\[0.4cm]
+    {\color{codegray!60}\rule{0.5\textwidth}{0.8pt}}\\[1.2cm]
+
+    {\fontsize{26}{34}\selectfont\textbf{Iterated Prisoner's Dilemma}}\\[0.4cm]
+    {\Large\color{arenaBlue}\textbf{Match Protocol and Tournament Evaluation}}\\[1.2cm]
+
+    {\large\textsc{Document B: Arena and Evaluation Specification}}\\[1.5cm]
+
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Problem Identifier:} & \shortname \\
+        \textbf{Specification Level:}& Document B (Evaluation and Match Protocol) \\
+        \textbf{Tournament Mode:}    & Round-Robin \\
+        \textbf{Match Length (v1):}  & Fixed Horizon ($T = 200$) \\
+        \textbf{Version:}            & \problemversion \\
+        \textbf{Date:}               & \problemdate \\
+        \bottomrule
+    \end{tabular}
+
+    \vfill
+
+    \parbox{0.85\textwidth}{
+        \centering\textit{
+            This specification defines the language-neutral controller protocol,
+            fixed match execution rules, round-robin tournament mechanics,
+            reproducible RNG seeding hierarchy, and baseline evaluation suite for Axelrod IPD.
+        }
+    }
+
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+% ------------------------------------------------------------
+% Table of Contents
+% ------------------------------------------------------------
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ============================================================
+% 1. Overview and Architecture
+% ============================================================
+
+\section{Overview and Architecture}
+
+This document (Document B) specifies how user algorithm submissions are structured, instantiated, executed, and benchmarked on the Algorithm Arena competitive platform for the \textbf{Iterated Prisoner's Dilemma (Axelrod IPD)} problem.
+
+The evaluation architecture enforces strict separation between:
+\begin{enumerate}
+    \item \textbf{Mathematical Stage Game (Document A):} The invariant problem logic ($T=5, R=3, P=1, S=0$, history $h_t$).
+    \item \textbf{Evaluation Protocol (Document B - This Document):} Controller interfaces, deterministic match execution, baseline suites, and leaderboard rankings.
+    \item \textbf{Execution Sandbox (Document C):} Hardware resource bounds, process isolation, and security constraints.
+\end{enumerate}
+
+% ============================================================
+% 2. Language-Neutral Controller Protocol
+% ============================================================
+
+\section{Language-Neutral Controller Protocol}
+
+\subsection{Abstract Controller Interface}
+A competitive submission is formalized as an autonomous, stateful decision-making controller $\pi$. The controller interacts with the Arena Arbiter via a standardized lifecycle protocol:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Lifecycle Method} & \textbf{Signature / Arguments} & \textbf{Semantic Behavior} \\
+\midrule
+\texttt{initialize()} & $\emptyset \to \emptyset$ & Invoked once when the process is spawned to allocate memory and load static weights. \\
+\texttt{reset()} & $\emptyset \to \emptyset$ & Invoked prior to each pairwise match. Must reset all internal state, buffers, and opponent models. \\
+\texttt{step()} & $\text{Observation} \to \text{Action}$ & Invoked synchronously at each round $t \in [0, 199]$ to output the next action. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Observation and Action Schemas}
+\begin{itemize}
+    \item \textbf{Input Observation:}
+    \[
+    o_t = \Big( t, \; \mathbf{a}_{0:t-1}^{(\text{self})}, \; \mathbf{a}_{0:t-1}^{(\text{opp})} \Big)
+    \]
+    where $t \in \mathbb{N}_0$ is the 0-indexed round number, $\mathbf{a}_{0:t-1}^{(\text{self})} \in \{0, 1\}^t$ is the list of own past actions in the active match, and $\mathbf{a}_{0:t-1}^{(\text{opp})} \in \{0, 1\}^t$ is the list of opponent past actions. At $t = 0$, both history lists are empty.
+    \item \textbf{Output Action:} An integer $a_t \in \{0, 1\}$ representing:
+    \[
+    a_t = 1 \implies \text{Cooperate } (C), \quad a_t = 0 \implies \text{Defect } (D)
+    \]
+\end{itemize}
+
+\subsection{Language Adapters}
+
+\subsubsection{Python 3 Adapter}
+\begin{lstlisting}[language=Python]
+class BaseStrategy:
+    """Standard Python Adapter for Algorithm Arena: Axelrod IPD."""
+
+    def __init__(self, name: str = "MyStrategy"):
+        self.name = name
+
+    def reset(self) -> None:
+        """Resets all internal match memory and state."""
+        pass
+
+    def step(self, history_self: list[int], history_opp: list[int]) -> int:
+        """Returns 1 (Cooperate) or 0 (Defect)."""
+        raise NotImplementedError
+\end{lstlisting}
+
+\subsubsection{C++ Adapter (C++17 / C++20)}
+\begin{lstlisting}[language=C++]
+#include <vector>
+#include <string>
+
+class IStrategy {
+public:
+    virtual ~IStrategy() = default;
+    virtual void reset() = 0;
+    virtual int step(const std::vector<int>& history_self, 
+                     const std::vector<int>& history_opp) = 0;
+};
+\end{lstlisting}
+
+\subsubsection{Rust Adapter}
+\begin{lstlisting}[language=C++]
+pub trait Strategy {
+    fn reset(&mut self);
+    fn step(&mut self, history_self: &[u8], history_opp: &[u8]) -> u8;
+}
+\end{lstlisting}
+
+\subsubsection{Java Adapter (Java 17 / 21 LTS)}
+\begin{lstlisting}[language=Java]
+package arena.axelrod;
+
+import java.util.List;
+
+public interface Strategy {
+    /**
+     * Resets internal match state and memory buffers.
+     */
+    void reset();
+
+    /**
+     * Computes the next action (1 = Cooperate, 0 = Defect).
+     */
+    int step(List<Integer> historySelf, List<Integer> historyOpp);
+}
+\end{lstlisting}
+
+\subsubsection{Go Adapter (Go 1.22+)}
+\begin{lstlisting}[language=C]
+package axelrod
+
+// Strategy defines the interface for Axelrod tournament controllers.
+type Strategy interface {
+    // Reset clears all internal state between pairwise matches.
+    Reset()
+
+    // Step computes the action for the current round (1 = Cooperate, 0 = Defect).
+    Step(historySelf []int, historyOpp []int) int
+}
+\end{lstlisting}
+
+% ============================================================
+% 3. Match Protocol
+% ============================================================
+
+\section{Match Protocol}
+
+\subsection{Fixed Match Horizon (v1 Standard)}
+For the MVP and v1 baseline specification:
+\begin{quote}
+\textbf{Match Duration:} Each pairwise match executes for exactly \textbf{$T = 200$ rounds}.
+\end{quote}
+\textit{Note:} Variable-horizon and noisy game variations are reserved for subsequent specification versions (e.g., \texttt{axelrod-ipd-v2}).
+
+\subsection{Step Execution Sequence}
+For each round $t = 0, 1, \dots, 199$:
+\begin{enumerate}
+    \item Arena Arbiter sends read-only snapshots of $(\mathbf{a}_{0:t-1}^{(1)}, \mathbf{a}_{0:t-1}^{(2)})$ to Agent 1 and Agent 2 simultaneously.
+    \item Both agents compute their actions $a_t^{(1)}$ and $a_t^{(2)}$ within the step timeout limit ($10$ ms).
+    \item The Arbiter records $(a_t^{(1)}, a_t^{(2)})$, computes stage payoffs $(r_t^{(1)}, r_t^{(2)})$ using the payoff matrix, and updates cumulative scores.
+    \item Actions are committed to the public match history.
+\end{enumerate}
+
+\subsection{Fallback and Error Handling}
+\begin{itemize}
+    \item \textbf{Invalid Return Value:} If an agent returns a value other than $0$ or $1$, the Arbiter overrides the decision to $D = 0$ (Defect) for that round and records a penalty warning.
+    \item \textbf{Step Timeout:} If an agent fails to respond within $10$ ms, the action defaults to $D = 0$.
+    \item \textbf{Process Crash / Fatal Exception:} The crashing agent forfeits the match, receiving $0$ points for all remaining rounds, while the opponent receives $T = 5$ points per remaining round.
+\end{itemize}
+
+% ============================================================
+% 4. Randomness and Deterministic Reproducibility
+% ============================================================
+
+\section{Randomness and Deterministic Reproducibility}
+
+To guarantee competitive integrity, dispute auditability, and instant match replayability, Algorithm Arena enforces a \textbf{Hierarchical PRNG Seeding Protocol}:
+
+\subsection{Seed Hierarchy}
+\[
+\text{Seed}_{\text{tournament}} \xrightarrow{\text{derive}} \text{Seed}_{\text{match}} \xrightarrow{\text{derive}} \Big( \text{Seed}_{\text{controller } 1}, \; \text{Seed}_{\text{controller } 2} \Big)
+\]
+
+\begin{enumerate}
+    \item \textbf{Match Seed Derivation:} Each pairwise match $(i, j)$ is assigned a unique 64-bit integer seed computed deterministically via cryptographic hashing:
+    \[
+    \text{Seed}_{i,j} = \operatorname{HMAC-SHA256}\Big(\text{TournamentSecret}, \; \operatorname{concat}(i, j, \text{match\_index})\Big)
+    \]
+    \item \textbf{Controller Seed Injection:} Prior to calling \texttt{reset()}, the platform seeds the standard pseudo-random number generator (PRNG) of the controller sandbox (e.g., Python \texttt{random.seed()}, \texttt{numpy.random.seed()}).
+\end{enumerate}
+
+\subsection{The Determinism Guarantee}
+\begin{quote}
+\textbf{Invariant:} Given an identical submission binary/code and an identical $\text{Seed}_{\text{match}}$, the controller's sequence of decisions across all $200$ rounds must be \textbf{100\% bitwise deterministic and reproducible}.
+\end{quote}
+Matches with non-deterministic unseeded execution or asynchronous race conditions are automatically flagged during verification.
+
+% ============================================================
+% 5. Tournament Format and Leaderboard
+% ============================================================
+
+\section{Tournament Format and Leaderboard}
+
+\subsection{Round-Robin Tournament}
+Let $\mathcal{P} = \{\pi_1, \pi_2, \dots, \pi_M\}$ be the pool of verified strategies.
+\begin{itemize}
+    \item Every strategy $\pi_i$ plays a pairwise match of $T = 200$ rounds against every strategy $\pi_j$ (for $j \neq i$).
+    \item Each strategy also plays one self-play match between two independent instances $(\pi_i, \pi_i)$ initialized with distinct controller seeds.
+\end{itemize}
+
+\subsection{Primary Ranking Metric}
+Strategies are ranked on the global leaderboard by their \textbf{Average Payoff Per Round}:
+\[
+\bar{u}_i = \frac{1}{M \cdot T} \sum_{j=1}^M S_{i,j}
+\]
+where $S_{i,j}$ is the total score accumulated by strategy $\pi_i$ in its $200$-round match against $\pi_j$.
+
+\subsection{Secondary Metrics}
+\begin{enumerate}
+    \item \textbf{Win-Loss-Tie Record:} Number of head-to-head match victories ($S_{i,j} > S_{j,i}$).
+    \item \textbf{Mean Cooperation Rate:}
+    \[
+    \rho_C(\pi_i) = \frac{\text{Total Cooperate Decisions Across All Matches}}{M \cdot 200}
+    \]
+\end{enumerate}
+
+\subsection{Tie-Breaking Order}
+In the event of an exact tie in average score $\bar{u}_i = \bar{u}_k$:
+\begin{enumerate}
+    \item Direct head-to-head match score between $\pi_i$ and $\pi_k$.
+    \item Total number of match wins.
+    \item Higher global cooperation rate $\rho_C$.
+    \item Earliest submission timestamp.
+\end{enumerate}
+
+% ============================================================
+% 6. Benchmark Baseline Opponents
+% ============================================================
+
+\section{Benchmark Baseline Opponents}
+
+All submissions are evaluated against the canonical 9 Axelrod baseline strategies:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Baseline Strategy} & \textbf{Identifier} & \textbf{Decision Rule} \\
+\midrule
+Always Cooperate & \texttt{ALLC} & Unconditionally plays $C = 1$ on all rounds. \\
+Always Defect & \texttt{ALLD} & Unconditionally plays $D = 0$ on all rounds. \\
+Tit-for-Tat & \texttt{TFT} & Starts with $C$, then replicates opponent's previous action. \\
+Tit-for-Two-Tats & \texttt{TF2T} & Defects only after two consecutive opponent defections. \\
+Grim Trigger & \texttt{GRIM} & Cooperates until opponent defects once; permanently defects thereafter. \\
+Win-Stay Lose-Shift & \texttt{PAVLOV} & Repeats action if payoff was $R$ or $T$; shifts action if payoff was $S$ or $P$. \\
+Generous Tit-for-Tat & \texttt{GTFT} & Replicates opponent action, but forgives defection with $q = 1/3$. \\
+Random & \texttt{RAND} & Selects $C$ or $D$ uniformly at random ($p = 0.5$). \\
+Prober (Detective) & \texttt{PROBER} & Plays $(C, D, C, C)$ initially; exploits unprovoked if opponent never retaliates. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}

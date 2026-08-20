@@ -1,0 +1,247 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Packages
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ============================================================
+% Page Setup & Layout
+% ============================================================
+
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=14.5pt
+}
+
+\definecolor{arenaBlue}{RGB}{24, 85, 144}
+\definecolor{codebg}{RGB}{247, 249, 250}
+\definecolor{codegreen}{RGB}{40, 140, 60}
+\definecolor{codegray}{RGB}{100, 100, 100}
+\definecolor{codeblue}{RGB}{20, 70, 160}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=arenaBlue,
+    urlcolor=arenaBlue,
+    citecolor=arenaBlue
+}
+
+% ============================================================
+% Header / Footer Configuration
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\lhead{\textbf{Algorithm Arena}}
+\rhead{Problem Specification: \problemname}
+
+\cfoot{\thepage}
+
+% ============================================================
+% Custom Problem Metadata Definitions
+% ============================================================
+
+\newcommand{\problemname}{[Problem Title]}
+\newcommand{\shortname}{[problem-slug]}
+\newcommand{\problemversion}{1.0.0}
+\newcommand{\problemauthor}{[Author Name / Team]}
+\newcommand{\problemdate}{\today}
+
+% ============================================================
+% Document Content
+% ============================================================
+
+\begin{document}
+
+% ------------------------------------------------------------
+% Title Page
+% ------------------------------------------------------------
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+
+    \centering
+    \vspace*{1.0cm}
+
+    {\Large\textbf{\color{arenaBlue}ALGORITHM ARENA}}\\[0.4cm]
+    {\color{codegray!60}\rule{0.5\textwidth}{0.8pt}}\\[1.2cm]
+
+    {\fontsize{26}{34}\selectfont\textbf{\problemname}}\\[0.4cm]
+    {\Large\color{arenaBlue}\textbf{Formal Problem Specification}}\\[1.2cm]
+
+    {\large\textsc{Document A: Domain and Mathematical Specification}}\\[1.5cm]
+
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Problem Identifier:} & \shortname \\
+        \textbf{Specification Level:}& Document A (Pure Mathematical Problem) \\
+        \textbf{Version:}            & \problemversion \\
+        \textbf{Category:}           & Game Theory / Optimization / Control \\
+        \textbf{Difficulty:}         & Beginner / Intermediate / Advanced / Research \\
+        \textbf{Author:}             & \problemauthor \\
+        \textbf{Date:}               & \problemdate \\
+        \bottomrule
+    \end{tabular}
+
+    \vfill
+
+    \parbox{0.85\textwidth}{
+        \centering\textit{
+            Standard Document A template specifying the pure mathematical model,
+            environment state, observation space, action space, transition dynamics,
+            and reward function of a problem.
+        }
+    }
+
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+% ------------------------------------------------------------
+% Table of Contents
+% ------------------------------------------------------------
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ============================================================
+% 1. Metadata
+% ============================================================
+
+\section{Metadata}
+
+\subsection{Problem Name}
+\begin{quote}
+\textbf{\problemname}
+\end{quote}
+
+\subsection{Short Identifier}
+\begin{quote}
+\texttt{\shortname}
+\end{quote}
+
+\subsection{Category}
+\begin{itemize}
+    \item[$\square$] Game Theory
+    \item[$\square$] Multi-Agent Systems
+    \item[$\square$] Online Decision Making
+    \item[$\square$] Combinatorial Optimization
+    \item[$\square$] Continuous Control / Robotics
+    \item[$\square$] Reinforcement Learning
+\end{itemize}
+
+\subsection{Difficulty Level}
+\begin{itemize}
+    \item[$\square$] Beginner
+    \item[$\square$] Intermediate
+    \item[$\square$] Advanced
+    \item[$\square$] Research
+\end{itemize}
+
+\subsection{Version History}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{Version} & \textbf{Date} & \textbf{Author} & \textbf{Changelog Summary} \\
+\midrule
+1.0.0 & YYYY-MM-DD & Author Name & Initial formalized problem specification \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================
+% 2. Problem Overview
+% ============================================================
+
+\section{Problem Overview}
+
+\subsection{Description}
+High-level conceptual description of the system or game being modeled.
+
+\subsection{Motivation}
+Why this problem is valuable, challenging, and interesting from an algorithmic perspective.
+
+\subsection{Learning Objectives}
+Key technical insights, trade-offs, and skills learned by solving this problem.
+
+% ============================================================
+% 3. Formal Problem Definition
+% ============================================================
+
+\section{Formal Problem Definition}
+
+\subsection{Agents and Roles}
+Number of agents $N$, symmetry, roles, and capabilities.
+
+\subsection{Horizon and Timing}
+Step structure, episode duration $T$, and synchronous vs. sequential interaction.
+
+\subsection{Action Space}
+Definition of action set $\mathcal{A}$:
+\[
+\mathcal{A} = \{a_1, a_2, \dots, a_K\} \quad \text{or} \quad \mathcal{A} \subseteq \mathbb{R}^d
+\]
+
+\subsection{State and Observation Space}
+State space $\mathcal{S}$ and observation mapping $o_t = \Omega(s_t, h_t)$.
+
+\subsection{Transition Dynamics}
+State transition law: $s_{t+1} \sim \mathcal{P}(s_{t+1} \mid s_t, \mathbf{a}_t)$.
+
+\subsection{Reward and Objective Function}
+Stage reward function $r_t = R(s_t, \mathbf{a}_t, s_{t+1})$ and cumulative utility objective $U(\pi)$.
+
+% ============================================================
+% 4. Mathematical Model
+% ============================================================
+
+\section{Mathematical Model}
+
+\subsection{Notation Summary}
+
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Meaning} \\
+\midrule
+$t$ & $\{0, \dots, T-1\}$ & Time step index \\
+$s_t$ & $\mathcal{S}$ & Environment state \\
+$a_t$ & $\mathcal{A}$ & Action selected \\
+$r_t$ & $\mathbb{R}$ & Stage reward \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Theoretical Properties and Optimality}
+Known equilibria, optimal bounds, or theoretical constraints.
+
+% ============================================================
+% 5. Concrete Examples
+% ============================================================
+
+\section{Concrete Execution Examples}
+
+Walkthrough of sample steps and transitions.
+
+\end{document}

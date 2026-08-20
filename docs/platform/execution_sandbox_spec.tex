@@ -1,0 +1,289 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================
+% Packages
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ============================================================
+% Page Setup & Layout
+% ============================================================
+
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=14.5pt
+}
+
+\definecolor{arenaBlue}{RGB}{24, 85, 144}
+\definecolor{codebg}{RGB}{247, 249, 250}
+\definecolor{codegreen}{RGB}{40, 140, 60}
+\definecolor{codegray}{RGB}{100, 100, 100}
+\definecolor{codeblue}{RGB}{20, 70, 160}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=arenaBlue,
+    urlcolor=arenaBlue,
+    citecolor=arenaBlue
+}
+
+% ============================================================
+% Header / Footer Configuration
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\lhead{\textbf{Algorithm Arena}}
+\rhead{Platform Specification: Execution and Sandboxing}
+
+\cfoot{\thepage}
+
+% ============================================================
+% Code Listings Style
+% ============================================================
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen}\itshape,
+    stringstyle=\color{arenaBlue},
+    numberstyle=\tiny\color{codegray},
+    numbers=left,
+    numbersep=8pt,
+    breaklines=true,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{codegray!40},
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+% ============================================================
+% Custom Document Definitions
+% ============================================================
+
+\newcommand{\docversion}{1.0.0}
+\newcommand{\docdate}{August 2026}
+
+% ============================================================
+% Document Content
+% ============================================================
+
+\begin{document}
+
+% ------------------------------------------------------------
+% Title Page
+% ------------------------------------------------------------
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+
+    \centering
+    \vspace*{1.0cm}
+
+    {\Large\textbf{\color{arenaBlue}ALGORITHM ARENA PLATFORM}}\\[0.4cm]
+    {\color{codegray!60}\rule{0.5\textwidth}{0.8pt}}\\[1.2cm]
+
+    {\fontsize{26}{34}\selectfont\textbf{Execution and Sandboxing}}\\[0.4cm]
+    {\Large\color{arenaBlue}\textbf{Security, Resource Isolation, and Runtime Environment}}\\[1.2cm]
+
+    {\large\textsc{Document C: Platform-Wide Infrastructure Specification}}\\[1.5cm]
+
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Document Level:}     & Document C (Global Platform Standard) \\
+        \textbf{Scope:}              & Universal across all Algorithm Arena challenges \\
+        \textbf{Security Model:}     & Zero-Trust Untrusted Code Execution \\
+        \textbf{Version:}            & \docversion \\
+        \textbf{Date:}               & \docdate \\
+        \bottomrule
+    \end{tabular}
+
+    \vfill
+
+    \parbox{0.85\textwidth}{
+        \centering\textit{
+            This specification defines the universal runtime isolation,
+            hardware resource limits, security sandbox constraints,
+            inter-process communication (IPC), and multi-language toolchains
+            powering Algorithm Arena.
+        }
+    }
+
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+% ------------------------------------------------------------
+% Table of Contents
+% ------------------------------------------------------------
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+% ============================================================
+% 1. Overview and Security Principles
+% ============================================================
+
+\section{Overview and Security Principles}
+
+Algorithm Arena executes arbitrary, user-submitted source code and compiled binaries from untrusted external participants. To ensure competitive fairness, benchmark integrity, and host system security, the platform operates under a strict \textbf{Zero-Trust Sandbox Model}.
+
+\subsection{Core Principles}
+\begin{enumerate}
+    \item \textbf{Strict Hermetic Isolation:} Untrusted code cannot access network interfaces, host filesystem structures, hardware devices, or sibling container memory.
+    \item \textbf{Absolute Determinism:} Hardware clocks, thread scheduling, and PRNG seeds are virtualized or constrained to produce identical execution trajectories on identical inputs.
+    \item \textbf{Hard Multi-Tier Resource Limits:} Exact CPU, memory, time, and file descriptor bounds are enforced at the Linux kernel level via cgroups v2 and seccomp-bpf.
+\end{enumerate}
+
+% ============================================================
+% 2. Resource Limits and Quotas
+% ============================================================
+
+\section{Resource Limits and Quotas}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Resource} & \textbf{Standard Limit} & \textbf{Enforcement Mechanism} \\
+\midrule
+CPU Allocation & $1$ dedicated vCPU & \texttt{cpuset.cpus} core pinning \\
+Memory (RAM) & $\le 256$ MB & \texttt{memory.max} (cgroups v2 OOM-killer) \\
+Per-Step Time & $\le 10$ ms & Real-time POSIX monotonic timer watchdog \\
+Per-Match Time & $\le 2.0$ seconds total & Aggregate wall-clock timeout \\
+Network Access & Strictly Disabled & Network namespace with unconfigured loopback \\
+Disk Storage & Read-only root + $16$MB tmpfs & Ephemeral non-persistent RAM disk \\
+Open File Descriptors & $\le 16$ & \texttt{RLIMIT\_NOFILE} \\
+Thread / Process Count & $\le 1$ process / thread & \texttt{pids.max = 1} (No forks/multithreading) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================
+% 3. Sandbox Isolation Architecture
+% ============================================================
+
+\section{Sandbox Isolation Architecture}
+
+\subsection{Linux Kernel Namespaces}
+Each submission instance is encapsulated within six isolated kernel namespaces:
+\begin{itemize}
+    \item \textbf{Mount (CLONE\_NEWNS):} Mounts a minimal, read-only rootfs containing only language runtime essentials.
+    \item \textbf{PID (CLONE\_NEWPID):} Isolates the process table; the participant controller is PID 1.
+    \item \textbf{Network (CLONE\_NEWNET):} Disconnects all physical and virtual network interfaces.
+    \item \textbf{IPC (CLONE\_NEWIPC):} Blocks host shared memory segments and semaphores.
+    \item \textbf{UTS (CLONE\_NEWUTS):} Isolates host system hostname and domain information.
+    \item \textbf{User (CLONE\_NEWUSER):} Maps container root to an unprivileged host UID.
+\end{itemize}
+
+\subsection{Seccomp-BPF Syscall Filtering}
+A strict Berkeley Packet Filter (BPF) intercepts all system calls executed by user code:
+\begin{itemize}
+    \item \textbf{Allowed Syscalls:} \texttt{read}, \texttt{write} (standard pipes only), \texttt{futex}, \texttt{mmap}, \texttt{brk}, \texttt{clock\_gettime}, \texttt{exit\_group}.
+    \item \textbf{Blocked Syscalls (Instant Termination):} \texttt{fork}, \texttt{vfork}, \texttt{clone}, \texttt{execve}, \texttt{socket}, \texttt{connect}, \texttt{bind}, \texttt{ptrace}, \texttt{kill}, \texttt{chroot}, \texttt{open} (write-mode).
+\end{itemize}
+
+% ============================================================
+% 4. Multi-Language Runtime Toolchains
+% ============================================================
+
+\section{Multi-Language Runtime Toolchains}
+
+The execution platform provides standardized language toolchains:
+
+\subsection{Python 3 Runtime}
+\begin{itemize}
+    \item \textbf{Interpreter:} CPython 3.10+ (64-bit Linux).
+    \item \textbf{Pre-installed Numerical Packages:} \texttt{numpy}, \texttt{scipy}.
+    \item \textbf{Prohibited Standard Modules:} \texttt{os}, \texttt{sys}, \texttt{subprocess}, \texttt{socket}, \texttt{ctypes}, \texttt{threading}, \texttt{multiprocessing} (blocked via import hooks and seccomp filters).
+\end{itemize}
+
+\subsection{C++ Runtime}
+\begin{itemize}
+    \item \textbf{Compiler:} GCC 13+ / Clang 17+ with flags:
+    \begin{lstlisting}[language=bash]
+    g++ -O3 -std=c++20 -static -fno-rtti -Wall -Wextra -s submission.cpp -o controller
+    \end{lstlisting}
+    \item \textbf{Standard Libraries:} Full ISO C++20 standard library (STL).
+\end{itemize}
+
+\subsection{Rust Runtime}
+\begin{itemize}
+    \item \textbf{Toolchain:} Rust Stable (1.75+).
+    \item \textbf{Compilation Command:} \texttt{cargo build --release --target x86\_64-unknown-linux-musl}.
+\end{itemize}
+
+\subsection{Java Runtime}
+\begin{itemize}
+    \item \textbf{JVM / JDK:} OpenJDK 21 LTS (64-bit).
+    \item \textbf{Execution Flags:}
+    \begin{lstlisting}[language=bash]
+    java -XX:+UseSerialGC -Xms32m -Xmx220m -Dfile.encoding=UTF-8 -jar submission.jar
+    \end{lstlisting}
+    \item \textbf{Security Policy:} Custom Java SecurityManager / JVM agent blocking unauthorized reflective access and network sockets.
+\end{itemize}
+
+\subsection{Go Runtime}
+\begin{itemize}
+    \item \textbf{Compiler:} Go 1.22+ (gc toolchain).
+    \item \textbf{Compilation Command:}
+    \begin{lstlisting}[language=bash]
+    CGO_ENABLED=0 go build -ldflags="-s -w" -o controller main.go
+    \end{lstlisting}
+    \item \textbf{Characteristics:} Statically linked pure binary with minimal memory footprint.
+\end{itemize}
+
+% ============================================================
+% 5. Inter-Process Communication (IPC) Protocol
+% ============================================================
+
+\section{Inter-Process Communication (IPC) Protocol}
+
+The platform executes matches via a \textbf{Driver-Worker Architecture}:
+
+\begin{figure}[htbp]
+\centering
+\begin{lstlisting}[language=bash]
+[ Arena Arbiter Engine ]
+        |
+        |--- (Anonymous Unix Pipe / Shared Memory)
+        |
+        v
+[ Sandbox Worker (seccomp + namespaces) ]
+   +-- Controller Instance (User Code)
+\end{lstlisting}
+\caption{Arena Arbiter and Sandbox Worker communication channel.}
+\label{fig:ipc_arch}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Handshake:} Arbiter sends \texttt{RESET(seed=0x3F8A)} over stdin. Controller responds with \texttt{ACK}.
+    \item \textbf{Step Dispatch:} Arbiter transmits JSON/binary observation packet.
+    \item \textbf{Action Reply:} Controller writes integer action token within 10ms.
+    \item \textbf{Watchdog Enforcement:} If timeout expires, Arbiter forcefully SIGKILLs the sandbox worker.
+\end{enumerate}
+
+\end{document}
