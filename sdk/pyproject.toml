@@ -1,0 +1,21 @@
+﻿[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ideal-arena"
+version = "0.1.0"
+description = "Competitive Algorithmic Arena and Multi-Agent Benchmark Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.22.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+ideal-arena = "ideal_arena.cli.main:main"
