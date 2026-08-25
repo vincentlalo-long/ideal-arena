@@ -1,4 +1,4 @@
-﻿# BaseStrategy Interface for Axelrod Iterated Prisoner's Dilemma.
+# BaseStrategy Interface for Axelrod Iterated Prisoner's Dilemma.
 
 from __future__ import annotations
 from abc import ABC, abstractmethod 

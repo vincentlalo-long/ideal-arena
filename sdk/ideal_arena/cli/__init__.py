@@ -1,1 +1,1 @@
-﻿"""CLI tools for local testing and benchmarking."""
+"""CLI tools for local testing and benchmarking."""

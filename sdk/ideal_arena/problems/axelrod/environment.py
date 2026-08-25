@@ -1,4 +1,4 @@
-﻿# Axelrod Iterated Prisoner's Dilemma (IPD) Environment.
+# Axelrod Iterated Prisoner's Dilemma (IPD) Environment.
 
 from __future__ import annotations
 from dataclasses import dataclass

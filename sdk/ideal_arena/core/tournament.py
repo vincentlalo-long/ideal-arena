@@ -1,1 +1,1 @@
-﻿"""Round-robin tournament orchestrator and leaderboard computation."""
+"""Round-robin tournament orchestrator and leaderboard computation."""

@@ -1,4 +1,4 @@
-﻿
+
 from __future__ import annotations
 import random
 from typing import Final, List, Sequence

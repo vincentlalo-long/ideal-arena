@@ -1,1 +1,1 @@
-﻿"""Unit and integration test suite for Ideal Arena SDK."""
+"""Unit and integration test suite for Ideal Arena SDK."""

@@ -1,4 +1,4 @@
-﻿"""Axelrod Iterated Prisoner's Dilemma (IPD) Problem Module."""
+"""Axelrod Iterated Prisoner's Dilemma (IPD) Problem Module."""
 
 from ideal_arena.problems.axelrod.baselines import (
     BASELINE_CLASSES,

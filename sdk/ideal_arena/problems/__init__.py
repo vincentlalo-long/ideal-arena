@@ -1,1 +1,1 @@
-﻿"""Problem-specific definitions and game environments."""
+"""Problem-specific definitions and game environments."""

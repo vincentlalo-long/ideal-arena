@@ -1,1 +1,1 @@
-﻿"""Tests for Axelrod tournament rankings and reproducibility."""
+"""Tests for Axelrod tournament rankings and reproducibility."""
