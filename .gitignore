@@ -1,4 +1,4 @@
-﻿# LaTeX auxiliary files
+# LaTeX auxiliary files
 *.aux
 *.bbl
 *.blg
@@ -31,3 +31,13 @@ __pycache__/
 .venv/
 env/
 venv/
+.pytest_cache/
+
+# Binaries & Executables
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+bot
+server/bin/
