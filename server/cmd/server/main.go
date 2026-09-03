@@ -1,47 +1,43 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
-	"time"
+	"log"
+	"os"
+	"path/filepath"
 
-	"ideal-arena/server/internal/engine"
-	"ideal-arena/server/internal/judger"
-	"ideal-arena/server/internal/tournament"
+	"ideal-arena/server/internal/api"
 )
 
 func main() {
-	fmt.Println("=== Ideal Arena Go Judger Platform ===")
+	port := flag.Int("port", 8080, "HTTP server port")
+	webDir := flag.String("web", "web", "Directory containing static web dashboard files")
+	flag.Parse()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	config := engine.DefaultMatchConfig()
-	config.Rounds = 50
-
-	// Test single match between two bot processes (e.g. Python adapter runner)
-	botA := judger.NewBotProcess("Python-Bot-1", "python", []string{"adapters/python/runner.py"}, 10*time.Millisecond)
-	botB := judger.NewBotProcess("Python-Bot-2", "python", []string{"adapters/python/runner.py"}, 10*time.Millisecond)
-
-	fmt.Println("\nRunning single pairwise match (Python vs Python)...")
-	res, err := judger.PlayMatch(ctx, botA, botB, config)
-	if err != nil {
-		fmt.Printf("Match error: %v\n", err)
-	} else {
-		fmt.Println(res.Summary())
+	// Locate web directory relative to working directory or binary
+	actualWebDir := *webDir
+	if _, err := os.Stat(actualWebDir); os.IsNotExist(err) {
+		// Fallback for execution from repo root
+		candidate := filepath.Join("server", "web")
+		if _, err := os.Stat(candidate); err == nil {
+			actualWebDir = candidate
+		}
 	}
 
-	// Test tournament runner
-	bots := []tournament.BotSpec{
-		{Name: "Python-TFT-1", Command: "python", Args: []string{"adapters/python/runner.py"}},
-		{Name: "Python-TFT-2", Command: "python", Args: []string{"adapters/python/runner.py"}},
-	}
+	addr := fmt.Sprintf(":%d", *port)
+	server := api.NewServer(addr, actualWebDir)
 
-	fmt.Println("\nRunning mini tournament...")
-	tourRes, err := tournament.RunTournament(ctx, bots, config, 2)
-	if err != nil {
-		fmt.Printf("Tournament error: %v\n", err)
-	} else {
-		fmt.Println("\n" + tourRes.DisplayLeaderboard())
+	fmt.Println("=========================================================")
+	fmt.Println("   IDEAL ARENA - Axelrod Judger & REST API Platform      ")
+	fmt.Println("=========================================================")
+	fmt.Printf(" [Web Visualizer]  http://localhost:%d/\n", *port)
+	fmt.Printf(" [API Health]      http://localhost:%d/api/v1/health\n", *port)
+	fmt.Printf(" [Static Assets]   %s\n", actualWebDir)
+	fmt.Println("=========================================================")
+	fmt.Println("Server is listening. Press Ctrl+C to terminate.")
+
+	if err := server.Start(); err != nil {
+		log.Fatalf("Server terminated: %v", err)
 	}
 }

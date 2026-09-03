@@ -8,27 +8,27 @@ import (
 )
 
 type BotSpec struct {
-	Name    string
-	Command string
-	Args    []string
+	Name    string   `json:"name"`
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
 }
 
 type PlayerStats struct {
-	Name          string
-	Rank          int
-	TotalScore    int
-	MatchesPlayed int
-	RoundsPlayed  int
-	Wins          int
-	Losses        int
-	Ties          int
-	AvgPayoff     float64
-	CoopRate      float64
+	Name          string  `json:"name"`
+	Rank          int     `json:"rank"`
+	TotalScore    int     `json:"total_score"`
+	MatchesPlayed int     `json:"matches_played"`
+	RoundsPlayed  int     `json:"rounds_played"`
+	Wins          int     `json:"wins"`
+	Losses        int     `json:"losses"`
+	Ties          int     `json:"ties"`
+	AvgPayoff     float64 `json:"avg_payoff"`
+	CoopRate      float64 `json:"coop_rate"`
 }
 
 type TournamentResult struct {
-	Standings []*PlayerStats
-	Matches   []*judger.MatchResult
+	Standings []*PlayerStats        `json:"standings"`
+	Matches   []*judger.MatchResult `json:"matches"`
 }
 
 func (tr *TournamentResult) DisplayLeaderboard() string {

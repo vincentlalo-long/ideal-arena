@@ -9,14 +9,14 @@ import (
 )
 
 type MatchResult struct {
-	PlayerAName string
-	PlayerBName string
-	Rounds      int
-	ScoreA      int
-	ScoreB      int
-	HistoryA    []int
-	HistoryB    []int
-	Duration    time.Duration
+	PlayerAName string        `json:"player_a_name"`
+	PlayerBName string        `json:"player_b_name"`
+	Rounds      int           `json:"rounds"`
+	ScoreA      int           `json:"score_a"`
+	ScoreB      int           `json:"score_b"`
+	HistoryA    []int         `json:"history_a"`
+	HistoryB    []int         `json:"history_b"`
+	Duration    time.Duration `json:"duration_ns"`
 }
 
 func (m *MatchResult) Summary() string {
