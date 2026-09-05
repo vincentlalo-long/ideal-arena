@@ -41,3 +41,8 @@ bin/
 *.dylib
 bot
 server/bin/
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
