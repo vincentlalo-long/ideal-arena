@@ -1,0 +1,128 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  python-sdk:
+    name: Python SDK Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest numpy
+          pip install -e sdk
+
+      - name: Run Python SDK Unit Tests
+        run: |
+          pytest sdk/tests/ -v
+
+  go-server:
+    name: Go Server & Judger Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: server/go.sum
+
+      - name: Set up Python for Judger integration test
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Go Unit Tests
+        working-directory: server
+        run: |
+          go test -v ./...
+
+      - name: Build Server and TUI binaries
+        working-directory: server
+        run: |
+          go build -v ./cmd/server
+          go build -v ./cmd/tui
+
+  frontend:
+    name: React Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Verify TypeScript & Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+  starter-kits:
+    name: Verify Multi-Language Adapters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Compile C++ Adapter
+        run: |
+          g++ -O3 -std=c++17 adapters/cpp/main.cpp -o /tmp/bot_cpp
+
+      - name: Compile Go Adapter
+        working-directory: adapters/go
+        run: |
+          go build -o /tmp/bot_go .
+
+      - name: Check Rust Adapter
+        working-directory: adapters/rust
+        run: |
+          cargo check
+
+      - name: Compile Java Adapter
+        working-directory: adapters/java
+        run: |
+          javac -d /tmp/java_classes *.java
