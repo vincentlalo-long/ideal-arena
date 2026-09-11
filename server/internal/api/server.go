@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"ideal-arena/server/internal/engine"
@@ -16,7 +15,6 @@ import (
 
 type Server struct {
 	httpServer *http.Server
-	staticDir  string
 }
 
 type SimulateMatchRequest struct {
@@ -31,29 +29,17 @@ type SimulateTournamentRequest struct {
 	Concurrency int                  `json:"concurrency"`
 }
 
-func NewServer(addr, staticDir string) *Server {
+func NewServer(addr string) *Server {
 	mux := http.NewServeMux()
-	s := &Server{
-		staticDir: staticDir,
-	}
+	s := &Server{}
 
 	// API Routes
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
+	mux.HandleFunc("/api/v1/domains", s.handleDomains)
+	mux.HandleFunc("/api/v1/problems", s.handleProblems)
 	mux.HandleFunc("/api/v1/presets", s.handlePresets)
 	mux.HandleFunc("/api/v1/matches/simulate", s.handleSimulateMatch)
 	mux.HandleFunc("/api/v1/tournaments/simulate", s.handleSimulateTournament)
-
-	// Web UI Static File Serving
-	if staticDir != "" {
-		fs := http.FileServer(http.Dir(staticDir))
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			if !strings.HasPrefix(r.URL.Path, "/api/") {
-				fs.ServeHTTP(w, r)
-				return
-			}
-			http.NotFound(w, r)
-		})
-	}
 
 	s.httpServer = &http.Server{
 		Addr:         addr,
@@ -99,8 +85,36 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":  "healthy",
-		"version": "0.1.0",
+		"version": "0.2.0",
 		"time":    time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+func (s *Server) handleDomains(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"domains": []string{"game_theory", "optimization", "simulation"},
+	})
+}
+
+func (s *Server) handleProblems(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	problems := []map[string]any{
+		{
+			"id":          "axelrod",
+			"name":        "Iterated Prisoner's Dilemma",
+			"domain":      "game_theory",
+			"description": "Axelrod's classic 2-player iterated game theory tournament.",
+		},
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"problems": problems,
 	})
 }
 
@@ -110,7 +124,6 @@ func (s *Server) handlePresets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Python adapter runner path relative to repo root
 	runnerPath := filepath.Join("..", "adapters", "python", "runner.py")
 	if _, err := os.Stat(runnerPath); os.IsNotExist(err) {
 		runnerPath = filepath.Join("adapters", "python", "runner.py")

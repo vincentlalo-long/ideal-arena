@@ -11,7 +11,7 @@ import (
 )
 
 func TestHealthEndpoint(t *testing.T) {
-	server := NewServer(":8080", "")
+	server := NewServer(":8080")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
 	w := httptest.NewRecorder()
@@ -32,8 +32,54 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 }
 
+func TestDomainsEndpoint(t *testing.T) {
+	server := NewServer(":8080")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/domains", nil)
+	w := httptest.NewRecorder()
+
+	server.httpServer.Handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
+
+	var resp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("Failed to decode JSON: %v", err)
+	}
+
+	domains, ok := resp["domains"].([]any)
+	if !ok || len(domains) == 0 {
+		t.Errorf("Expected domains list, got %v", resp["domains"])
+	}
+}
+
+func TestProblemsEndpoint(t *testing.T) {
+	server := NewServer(":8080")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/problems", nil)
+	w := httptest.NewRecorder()
+
+	server.httpServer.Handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
+
+	var resp map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("Failed to decode JSON: %v", err)
+	}
+
+	problems, ok := resp["problems"].([]any)
+	if !ok || len(problems) == 0 {
+		t.Errorf("Expected problems list, got %v", resp["problems"])
+	}
+}
+
 func TestPresetsEndpoint(t *testing.T) {
-	server := NewServer(":8080", "")
+	server := NewServer(":8080")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/presets", nil)
 	w := httptest.NewRecorder()
@@ -55,7 +101,7 @@ func TestPresetsEndpoint(t *testing.T) {
 }
 
 func TestSimulateMatchAPI(t *testing.T) {
-	server := NewServer(":8080", "")
+	server := NewServer(":8080")
 
 	reqBody := SimulateMatchRequest{
 		PlayerA: tournament.BotSpec{
