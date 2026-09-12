@@ -1,8 +1,7 @@
-"""
-Ideal Arena Command-Line Interface (CLI).
+"""Ideal Arena Command-Line Interface (CLI).
 
-Provides local developer commands to simulate matches, benchmark submissions
-against standard baselines, and inspect tournament leaderboards.
+Provides local developer commands to list problems, simulate matches,
+benchmark submissions against baselines, and inspect tournament leaderboards.
 """
 
 from __future__ import annotations
@@ -13,9 +12,11 @@ import os
 import sys
 from typing import Type
 
+from ideal_arena.core.base import GameTheoryStrategy, ProblemDomain
 from ideal_arena.core.match import play_match
+from ideal_arena.core.registry import list_domains, list_problems
 from ideal_arena.core.tournament import run_round_robin
-from ideal_arena.problems.axelrod.baselines import (
+from ideal_arena.problems.game_theory.axelrod.baselines import (
     AlwaysCooperate,
     AlwaysDefect,
     GrimTrigger,
@@ -23,8 +24,8 @@ from ideal_arena.problems.axelrod.baselines import (
     TitForTat,
     get_all_baselines,
 )
-from ideal_arena.problems.axelrod.environment import MatchConfig
-from ideal_arena.problems.axelrod.strategy import BaseStrategy
+from ideal_arena.problems.game_theory.axelrod.environment import MatchConfig
+from ideal_arena.problems.game_theory.axelrod.strategy import BaseStrategy
 
 OPPONENT_PRESETS: dict[str, Type[BaseStrategy]] = {
     "tft": TitForTat,
@@ -52,13 +53,12 @@ def load_strategy_from_file(file_path: str) -> BaseStrategy:
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
 
-    # Find the first BaseStrategy subclass defined in the module
     for attr_name in dir(module):
         attr = getattr(module, attr_name)
         if (
             isinstance(attr, type)
-            and issubclass(attr, BaseStrategy)
-            and attr is not BaseStrategy
+            and issubclass(attr, (BaseStrategy, GameTheoryStrategy))
+            and attr not in (BaseStrategy, GameTheoryStrategy)
         ):
             return attr()
 
@@ -69,8 +69,22 @@ def load_strategy_from_file(file_path: str) -> BaseStrategy:
     sys.exit(1)
 
 
+def cmd_list(args: argparse.Namespace) -> None:
+    """Lists registered problems and supported domains."""
+    print("=== Ideal Arena Problem Domains ===")
+    for d in list_domains():
+        print(f"  • {d.value}")
+
+    print("\n=== Registered Problems ===")
+    problems = list_problems()
+    if not problems:
+        print("  (No problems registered)")
+    for p in problems:
+        print(f"  • [{p.domain.value}] {p.problem_id}: {p.name} - {p.metadata.description}")
+
+
 def cmd_baselines(args: argparse.Namespace) -> None:
-    """Executes the standard 9-baseline tournament."""
+    """Executes the standard 9-baseline tournament for Axelrod."""
     strats = get_all_baselines()
     config = MatchConfig(rounds=args.rounds)
     print(f"Running 9-baseline round-robin tournament ({args.rounds} rounds/match, Seed: {args.seed})...")
@@ -80,10 +94,8 @@ def cmd_baselines(args: argparse.Namespace) -> None:
 
 def cmd_match(args: argparse.Namespace) -> None:
     """Executes a single match between two strategies."""
-    # Load player A
     strat_a = load_strategy_from_file(args.player_a)
 
-    # Load player B (either file or preset)
     player_b_lower = args.player_b.lower()
     if player_b_lower in OPPONENT_PRESETS:
         strat_b = OPPONENT_PRESETS[player_b_lower]()
@@ -110,9 +122,13 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ideal-arena",
-        description="Ideal Arena CLI: Multi-Agent Benchmark and Tournament Simulator",
+        description="Ideal Arena CLI: Multi-Domain Problem Benchmark and Tournament Simulator",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Command: list
+    p_list = subparsers.add_parser("list", help="List registered problems and supported domains")
+    p_list.set_defaults(func=cmd_list)
 
     # Command: baselines
     p_base = subparsers.add_parser("baselines", help="Run the canonical 9-baseline tournament")

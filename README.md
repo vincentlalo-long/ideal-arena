@@ -2,15 +2,21 @@
 
 [![CI Pipeline](https://github.com/vincentlalo-long/ideal-arena/actions/workflows/ci.yml/badge.svg)](https://github.com/vincentlalo-long/ideal-arena/actions)
 
-Ideal Arena is a high-performance competitive platform for algorithmic strategy development, multi-agent game theory simulations, and tournament benchmarking.
+Ideal Arena is an extensible, high-performance competitive platform for algorithmic strategy development, multi-agent game theory simulations, optimization benchmarks, and tournament evaluation.
 
-## Repository Architecture
+## Architecture
 
-- **docs/**: 3-tier formal specifications (Problem Math, Evaluation Protocol, Sandbox Security).
-- **sdk/**: Python SDK, deterministic PRNG match runner, round-robin tournament engine, and CLI.
+The platform is designed around domain paradigms with clean separation between core runners and concrete problem implementations:
+
+- **sdk/**: Python SDK with core abstractions (`BaseProblem`, `GameTheoryStrategy`, `OptimizationSolver`, `SimulationAgent`), deterministic PRNG seeding, tournament engines, and CLI.
+  - `core/`: Generic problem registry, execution runners, and seeding context (fully decoupled from specific problems).
+  - `problems/`: Categorized by domain paradigm:
+    - `game_theory/`: Multi-agent games (including `axelrod` - Iterated Prisoner's Dilemma).
+    - `optimization/`: Combinatorial and continuous optimization benchmarks (extensible).
+    - `simulation/`: Sequential decision-making and agent-environment simulations (extensible).
+- **server/**: Go backend platform featuring a sandboxed subprocess judger with a watchdog timer, REST API endpoints, and an interactive Terminal UI (TUI).
 - **adapters/**: Multi-language bot starter kits (Python, C++, Go, Rust, Java) communicating via standard JSON lines over stdio.
-- **server/**: Go backend platform featuring a sandboxed subprocess judger with a 10ms watchdog timer, REST API, and an interactive Terminal UI (TUI).
-- **frontend/**: Modern React, TypeScript, and Tailwind CSS web application for match replay visualization and tournament leaderboards.
+- **docs/**: Formal specifications (Problem Math, Evaluation Protocol, Sandbox Security).
 
 ## Quickstart
 
@@ -18,6 +24,9 @@ Ideal Arena is a high-performance competitive platform for algorithmic strategy 
 
 ```bash
 pip install -e sdk
+
+# List supported domains and registered problems
+ideal-arena list
 
 # Run official 9-baseline Axelrod tournament
 ideal-arena baselines
@@ -43,7 +52,7 @@ Controls:
 - `1, 2, 3`: Change playback speed
 - `q`: Quit
 
-### 3. Web Visualizer & REST API
+### 3. REST API & Judger Daemon
 
 Start the Go judger backend:
 
@@ -52,15 +61,13 @@ cd server
 go run cmd/server/main.go --port 8080
 ```
 
-Start the React web visualizer:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:3000 to interact with the visualizer.
+Available endpoints:
+- `GET /api/v1/health` - Service health status
+- `GET /api/v1/domains` - Active problem domains (`game_theory`, `optimization`, `simulation`)
+- `GET /api/v1/problems` - Registered problem specifications
+- `GET /api/v1/presets` - Bot presets
+- `POST /api/v1/matches/simulate` - Execute pairwise match between bots
+- `POST /api/v1/tournaments/simulate` - Run concurrent tournament
 
 ## Documentation Specifications
 
