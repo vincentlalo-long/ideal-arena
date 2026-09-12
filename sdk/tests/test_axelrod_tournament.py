@@ -3,7 +3,7 @@
 import unittest
 
 from ideal_arena.core.tournament import run_round_robin
-from ideal_arena.problems.axelrod.baselines import (
+from ideal_arena.problems.game_theory.axelrod.baselines import (
     AlwaysCooperate,
     AlwaysDefect,
     GrimTrigger,
@@ -11,7 +11,7 @@ from ideal_arena.problems.axelrod.baselines import (
     TitForTat,
     get_all_baselines,
 )
-from ideal_arena.problems.axelrod.environment import MatchConfig
+from ideal_arena.problems.game_theory.axelrod.environment import MatchConfig
 
 
 class TestAxelrodTournament(unittest.TestCase):
