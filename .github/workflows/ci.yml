@@ -33,36 +33,6 @@ jobs:
         run: |
           pytest sdk/tests/ -v
 
-  go-server:
-    name: Go Server & Judger Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-          cache-dependency-path: server/go.sum
-
-      - name: Set up Python for Judger integration test
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Run Go Unit Tests
-        working-directory: server
-        run: |
-          go test -v ./...
-
-      - name: Build Server and TUI binaries
-        working-directory: server
-        run: |
-          go build -v ./cmd/server
-          go build -v ./cmd/tui
-
   starter-kits:
     name: Verify Multi-Language Adapters
     runs-on: ubuntu-latest

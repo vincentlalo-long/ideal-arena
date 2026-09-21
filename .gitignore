@@ -42,7 +42,19 @@ bin/
 bot
 server/bin/
 
+# Python packaging
+*.egg-info/
+.eggs/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Rust
+target/
+
 # Node / Frontend
 node_modules/
 dist/
 .vite/
+SYSTEM_DESIGN.md
