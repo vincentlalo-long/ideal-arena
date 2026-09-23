@@ -1,22 +1,18 @@
 #pragma once
-#include <vector>
-#include <string>
+
+#include "json.hpp"
 
 class IStrategy {
 public:
     virtual ~IStrategy() = default;
-    virtual void reset() {}
-    virtual int step(const std::vector<int>& history_self, const std::vector<int>& history_opp) = 0;
+    virtual void reset(long long seed) { (void)seed; }
+    virtual Json act(const Json& observation) = 0;
 };
 
 class MyStrategy : public IStrategy {
 public:
-    void reset() override {}
-
-    int step(const std::vector<int>& history_self, const std::vector<int>& history_opp) override {
-        if (history_opp.empty()) {
-            return 1;
-        }
-        return history_opp.back();
+    Json act(const Json& observation) override {
+        (void)observation;
+        return Json();
     }
 };

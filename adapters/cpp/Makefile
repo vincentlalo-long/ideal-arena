@@ -3,7 +3,7 @@ CXXFLAGS ?= -O3 -std=c++17 -Wall
 
 all: bot
 
-bot: main.cpp strategy.hpp
+bot: main.cpp strategy.hpp json.hpp
 	$(CXX) $(CXXFLAGS) main.cpp -o bot
 
 clean:

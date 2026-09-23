@@ -1,6 +1,8 @@
+use serde_json::Value;
+
 pub trait Strategy {
-    fn reset(&mut self) {}
-    fn step(&mut self, history_self: &[i32], history_opp: &[i32]) -> i32;
+    fn reset(&mut self, _seed: u64) {}
+    fn act(&mut self, observation: &Value) -> Value;
 }
 
 pub struct MyStrategy;
@@ -12,12 +14,9 @@ impl MyStrategy {
 }
 
 impl Strategy for MyStrategy {
-    fn reset(&mut self) {}
+    fn reset(&mut self, _seed: u64) {}
 
-    fn step(&mut self, _history_self: &[i32], history_opp: &[i32]) -> i32 {
-        if history_opp.is_empty() {
-            return 1;
-        }
-        *history_opp.last().unwrap_or(&1)
+    fn act(&mut self, _observation: &Value) -> Value {
+        Value::Null
     }
 }

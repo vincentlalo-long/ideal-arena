@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Protocol, runtime_checkable
 
-PROTOCOL_VERSION = "orcust-agent/1"
+PROTOCOL_VERSION = "arena-agent/1"
 
 
 @runtime_checkable

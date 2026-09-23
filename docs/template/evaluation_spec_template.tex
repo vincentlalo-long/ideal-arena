@@ -136,15 +136,19 @@ Define the matchmaking scope, controller execution model, and evaluation goals.
 
 \section{Controller Protocol}
 
+\subsection{Transport: \texttt{arena-agent/1}}
+UTF-8 JSON Lines over stdin/stdout (\texttt{hello}/\texttt{ready}, \texttt{reset}/\texttt{ack},
+\texttt{act}/\texttt{action}, \texttt{end}); unknown message types are ignored.
+See \texttt{adapters/README.md}.
+
 \subsection{Lifecycle Methods}
 \begin{itemize}
-    \item \texttt{initialize()}: Process setup and static resource loading.
-    \item \texttt{reset()}: Memory cleanup before each match.
-    \item \texttt{step(observation)}: Synchronous action dispatch.
+    \item \texttt{reset(seed)}: Per-episode setup; clear state and seed the controller PRNG.
+    \item \texttt{act(observation)}: Synchronous action dispatch; the reply echoes the request's \texttt{t}.
 \end{itemize}
 
 \subsection{Observation and Action Contracts}
-Data types and ranges for input and output.
+Problem-defined JSON schemas for the \texttt{obs} and \texttt{action} payloads.
 
 % ============================================================
 % 3. Match Protocol

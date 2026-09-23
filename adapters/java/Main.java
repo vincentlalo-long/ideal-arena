@@ -2,32 +2,11 @@ package arena;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Main {
-    private static List<Integer> parseArray(String json, String key) {
-        List<Integer> list = new ArrayList<>();
-        int keyIdx = json.indexOf("\"" + key + "\"");
-        if (keyIdx == -1) return list;
-        int start = json.indexOf("[", keyIdx);
-        int end = json.indexOf("]", start);
-        if (start == -1 || end == -1) return list;
-
-        String content = json.substring(start + 1, end).trim();
-        if (content.isEmpty()) return list;
-
-        String[] tokens = content.split(",");
-        for (String token : tokens) {
-            String clean = token.trim();
-            if (!clean.isEmpty()) {
-                try {
-                    list.add(Integer.parseInt(clean));
-                } catch (NumberFormatException ignored) {}
-            }
-        }
-        return list;
-    }
+    private static final String SDK = "java/0.2.0";
 
     public static void main(String[] args) throws Exception {
         Strategy bot = new MyStrategy();
@@ -38,15 +17,44 @@ public class Main {
             line = line.trim();
             if (line.isEmpty()) continue;
 
-            if (line.contains("\"RESET\"")) {
-                bot.reset();
-                System.out.println("{\"status\":\"OK\"}");
-                System.out.flush();
-            } else {
-                List<Integer> histSelf = parseArray(line, "history_self");
-                List<Integer> histOpp = parseArray(line, "history_opp");
-                int action = bot.step(histSelf, histOpp);
-                System.out.println("{\"action\":" + action + "}");
+            Object parsed;
+            try {
+                parsed = Json.parse(line);
+            } catch (RuntimeException e) {
+                System.err.println("arena-agent: ignoring malformed line");
+                continue;
+            }
+            if (!(parsed instanceof Map)) continue;
+
+            Map<String, Object> msg = Json.asObject(parsed);
+            String type = Json.asString(msg.get("type"), "");
+            String reply = null;
+
+            switch (type) {
+                case "hello":
+                    reply = "{\"type\":\"ready\",\"sdk\":\"" + SDK + "\"}";
+                    break;
+                case "reset":
+                    bot.reset(Json.asLong(msg.get("seed"), 0L));
+                    Map<String, Object> ack = new LinkedHashMap<>();
+                    ack.put("type", "ack");
+                    ack.put("episode", Json.asString(msg.get("episode"), ""));
+                    reply = Json.stringify(ack);
+                    break;
+                case "act":
+                    Object action = bot.act(msg.get("obs"));
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("type", "action");
+                    response.put("t", Json.asLong(msg.get("t"), 0L));
+                    response.put("action", action);
+                    reply = Json.stringify(response);
+                    break;
+                default:
+                    break;
+            }
+
+            if (reply != null) {
+                System.out.println(reply);
                 System.out.flush();
             }
         }

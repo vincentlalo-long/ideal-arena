@@ -280,9 +280,10 @@ The platform executes matches via a \textbf{Driver-Worker Architecture}:
 \end{figure}
 
 \begin{enumerate}
-    \item \textbf{Handshake:} Arbiter sends \texttt{RESET(seed=0x3F8A)} over stdin. Controller responds with \texttt{ACK}.
-    \item \textbf{Step Dispatch:} Arbiter transmits JSON/binary observation packet.
-    \item \textbf{Action Reply:} Controller writes integer action token within 10ms.
+    \item \textbf{Handshake:} Arbiter sends \texttt{\{"type":"hello","protocol":"arena-agent/1"\}} over stdin; the controller responds with \texttt{\{"type":"ready"\}}.
+    \item \textbf{Episode Reset:} Arbiter sends \texttt{\{"type":"reset","seed":16266\}}; the controller responds with \texttt{\{"type":"ack"\}}.
+    \item \textbf{Act Dispatch:} Arbiter transmits \texttt{\{"type":"act","t":t,"obs":\{...\}\}} (JSON Lines).
+    \item \textbf{Action Reply:} The controller writes \texttt{\{"type":"action","t":t,"action":...\}} within 10ms.
     \item \textbf{Watchdog Enforcement:} If timeout expires, Arbiter forcefully SIGKILLs the sandbox worker.
 \end{enumerate}
 

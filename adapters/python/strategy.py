@@ -1,11 +1,9 @@
-class MyStrategy:
-    def __init__(self) -> None:
-        self.name = "MyBot"
+from typing import Any
 
-    def reset(self) -> None:
+
+class MyStrategy:
+    def reset(self, seed: int | None = None) -> None:
         pass
 
-    def step(self, history_self: list[int], history_opp: list[int]) -> int:
-        if not history_opp:
-            return 1
-        return history_opp[-1]
+    def act(self, observation: Any) -> Any:
+        return None

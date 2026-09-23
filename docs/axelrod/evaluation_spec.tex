@@ -167,29 +167,48 @@ The evaluation architecture enforces strict separation between:
 
 \section{Language-Neutral Controller Protocol}
 
+\subsection{Transport: \texttt{arena-agent/1}}
+Controllers run as subprocesses speaking the generic \texttt{arena-agent/1}
+protocol with the Arena Arbiter: UTF-8 JSON Lines over \texttt{stdin}/\texttt{stdout},
+one message per line. \texttt{stdout} is reserved exclusively for protocol
+messages; diagnostics go to \texttt{stderr}. Unknown message types (including
+\texttt{end}) must be ignored for forward compatibility.
+
+\begin{lstlisting}
+{"type":"hello","protocol":"arena-agent/1","problem":"axelrod-ipd@1.0.0","seat":0,"limits":{"stepMs":10,"timeBankMs":200}}
+{"type":"ready","sdk":"python/0.2.0"}
+{"type":"reset","episode":"ep_01J...","seed":8841236,"config":{"rounds":200}}
+{"type":"ack","episode":"ep_01J..."}
+{"type":"act","t":0,"obs":{...}}
+{"type":"action","t":0,"action":1}
+{"type":"end","episode":"ep_01J...","result":{...}}
+\end{lstlisting}
+
 \subsection{Abstract Controller Interface}
 A competitive submission is formalized as an autonomous, stateful decision-making controller $\pi$. The controller interacts with the Arena Arbiter via a standardized lifecycle protocol:
 
 \begin{center}
 \begin{tabularx}{\textwidth}{llX}
 \toprule
-\textbf{Lifecycle Method} & \textbf{Signature / Arguments} & \textbf{Semantic Behavior} \\
+\textbf{Lifecycle Event} & \textbf{Signature / Arguments} & \textbf{Semantic Behavior} \\
 \midrule
-\texttt{initialize()} & $\emptyset \to \emptyset$ & Invoked once when the process is spawned to allocate memory and load static weights. \\
-\texttt{reset()} & $\emptyset \to \emptyset$ & Invoked prior to each pairwise match. Must reset all internal state, buffers, and opponent models. \\
-\texttt{step()} & $\text{Observation} \to \text{Action}$ & Invoked synchronously at each round $t \in [0, 199]$ to output the next action. \\
+\texttt{hello} $\to$ \texttt{ready} & $\emptyset \to \emptyset$ & Sent once when the process is spawned; the controller acknowledges the protocol version and toolchain. \\
+\texttt{reset} $\to$ \texttt{ack} & $\text{seed} \to \emptyset$ & Invoked prior to each pairwise match. Must reset all internal state, buffers, and opponent models; the seed initializes the controller PRNG. \\
+\texttt{act} $\to$ \texttt{action} & $\text{Observation} \to \text{Action}$ & Invoked synchronously at each round $t \in [0, 199]$ to output the next action; the response echoes $t$. \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 \subsection{Observation and Action Schemas}
+At the transport layer \texttt{obs} and \texttt{action} are arbitrary JSON values;
+the adapter is problem-agnostic. For \texttt{axelrod-ipd} they are constrained as follows:
 \begin{itemize}
-    \item \textbf{Input Observation:}
+    \item \textbf{Observation payload (\texttt{obs}):}
     \[
     o_t = \Big( t, \; \mathbf{a}_{0:t-1}^{(\text{self})}, \; \mathbf{a}_{0:t-1}^{(\text{opp})} \Big)
     \]
     where $t \in \mathbb{N}_0$ is the 0-indexed round number, $\mathbf{a}_{0:t-1}^{(\text{self})} \in \{0, 1\}^t$ is the list of own past actions in the active match, and $\mathbf{a}_{0:t-1}^{(\text{opp})} \in \{0, 1\}^t$ is the list of opponent past actions. At $t = 0$, both history lists are empty.
-    \item \textbf{Output Action:} An integer $a_t \in \{0, 1\}$ representing:
+    \item \textbf{Output Action (\texttt{action}):} An integer $a_t \in \{0, 1\}$ representing:
     \[
     a_t = 1 \implies \text{Cooperate } (C), \quad a_t = 0 \implies \text{Defect } (D)
     \]
@@ -197,75 +216,60 @@ A competitive submission is formalized as an autonomous, stateful decision-makin
 
 \subsection{Language Adapters}
 
+The starter kits in \texttt{adapters/} expose the same problem-agnostic
+interface; only the \texttt{obs}/\texttt{action} payload schemas above are
+problem-specific.
+
 \subsubsection{Python 3 Adapter}
 \begin{lstlisting}[language=Python]
-class BaseStrategy:
-    """Standard Python Adapter for Algorithm Arena: Axelrod IPD."""
+from typing import Any
 
-    def __init__(self, name: str = "MyStrategy"):
-        self.name = name
+class MyStrategy:
+    def reset(self, seed: int | None = None) -> None: ...
 
-    def reset(self) -> None:
-        """Resets all internal match memory and state."""
-        pass
-
-    def step(self, history_self: list[int], history_opp: list[int]) -> int:
-        """Returns 1 (Cooperate) or 0 (Defect)."""
-        raise NotImplementedError
+    def act(self, observation: Any) -> Any: ...
 \end{lstlisting}
 
 \subsubsection{C++ Adapter (C++17 / C++20)}
 \begin{lstlisting}[language=C++]
-#include <vector>
-#include <string>
+#include "json.hpp"
 
 class IStrategy {
 public:
     virtual ~IStrategy() = default;
-    virtual void reset() = 0;
-    virtual int step(const std::vector<int>& history_self, 
-                     const std::vector<int>& history_opp) = 0;
+    virtual void reset(long long seed) = 0;
+    virtual Json act(const Json& observation) = 0;
 };
 \end{lstlisting}
 
 \subsubsection{Rust Adapter}
 \begin{lstlisting}[language=C++]
+use serde_json::Value;
+
 pub trait Strategy {
-    fn reset(&mut self);
-    fn step(&mut self, history_self: &[u8], history_opp: &[u8]) -> u8;
+    fn reset(&mut self, seed: u64);
+    fn act(&mut self, observation: &Value) -> Value;
 }
 \end{lstlisting}
 
 \subsubsection{Java Adapter (Java 17 / 21 LTS)}
 \begin{lstlisting}[language=Java]
-package arena.axelrod;
-
-import java.util.List;
+package arena;
 
 public interface Strategy {
-    /**
-     * Resets internal match state and memory buffers.
-     */
-    void reset();
+    default void reset(long seed) {}
 
-    /**
-     * Computes the next action (1 = Cooperate, 0 = Defect).
-     */
-    int step(List<Integer> historySelf, List<Integer> historyOpp);
+    Object act(Object observation);
 }
 \end{lstlisting}
 
 \subsubsection{Go Adapter (Go 1.22+)}
 \begin{lstlisting}[language=C]
-package axelrod
+package main
 
-// Strategy defines the interface for Axelrod tournament controllers.
 type Strategy interface {
-    // Reset clears all internal state between pairwise matches.
-    Reset()
-
-    // Step computes the action for the current round (1 = Cooperate, 0 = Defect).
-    Step(historySelf []int, historyOpp []int) int
+    Reset(seed int64)
+    Act(observation any) any
 }
 \end{lstlisting}
 

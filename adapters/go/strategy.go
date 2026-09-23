@@ -1,17 +1,14 @@
 package main
 
 type Strategy interface {
-	Reset()
-	Step(historySelf []int, historyOpp []int) int
+	Reset(seed int64)
+	Act(observation any) any
 }
 
 type MyStrategy struct{}
 
-func (s *MyStrategy) Reset() {}
+func (s *MyStrategy) Reset(seed int64) {}
 
-func (s *MyStrategy) Step(historySelf []int, historyOpp []int) int {
-	if len(historyOpp) == 0 {
-		return 1
-	}
-	return historyOpp[len(historyOpp)-1]
+func (s *MyStrategy) Act(observation any) any {
+	return nil
 }

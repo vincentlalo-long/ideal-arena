@@ -1,16 +1,11 @@
 package arena;
 
-import java.util.List;
-
 public class MyStrategy implements Strategy {
     @Override
-    public void reset() {}
+    public void reset(long seed) {}
 
     @Override
-    public int step(List<Integer> historySelf, List<Integer> historyOpp) {
-        if (historyOpp == null || historyOpp.isEmpty()) {
-            return 1;
-        }
-        return historyOpp.get(historyOpp.size() - 1);
+    public Object act(Object observation) {
+        return null;
     }
 }

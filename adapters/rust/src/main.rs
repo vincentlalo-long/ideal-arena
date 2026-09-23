@@ -1,27 +1,27 @@
 mod strategy;
 
+use serde_json::{json, Value};
 use std::io::{self, BufRead};
-use serde::{Deserialize, Serialize};
 use strategy::{MyStrategy, Strategy};
 
-#[derive(Deserialize)]
-struct Request {
-    #[serde(default)]
-    command: String,
-    #[serde(default)]
-    history_self: Vec<i32>,
-    #[serde(default)]
-    history_opp: Vec<i32>,
-}
+const SDK: &str = "rust/0.2.0";
 
-#[derive(Serialize)]
-struct StepResponse {
-    action: i32,
-}
-
-#[derive(Serialize)]
-struct StatusResponse {
-    status: String,
+#[derive(serde::Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+enum Request {
+    Hello,
+    Reset {
+        #[serde(default)]
+        episode: String,
+        #[serde(default)]
+        seed: u64,
+    },
+    Act {
+        #[serde(default)]
+        t: i64,
+        #[serde(default)]
+        obs: Value,
+    },
 }
 
 fn main() {
@@ -38,17 +38,27 @@ fn main() {
             continue;
         }
 
-        if let Ok(req) = serde_json::from_str::<Request>(&line) {
-            if req.command == "RESET" {
-                bot.reset();
-                let resp = StatusResponse {
-                    status: "OK".to_string(),
-                };
-                println!("{}", serde_json::to_string(&resp).unwrap());
-            } else {
-                let action = bot.step(&req.history_self, &req.history_opp);
-                let resp = StepResponse { action };
-                println!("{}", serde_json::to_string(&resp).unwrap());
+        let request = match serde_json::from_str::<Request>(&line) {
+            Ok(request) => request,
+            Err(_) => {
+                if serde_json::from_str::<Value>(&line).is_err() {
+                    eprintln!("arena-agent: ignoring malformed line");
+                }
+                continue;
+            }
+        };
+
+        match request {
+            Request::Hello => {
+                println!("{}", json!({"type": "ready", "sdk": SDK}));
+            }
+            Request::Reset { episode, seed } => {
+                bot.reset(seed);
+                println!("{}", json!({"type": "ack", "episode": episode}));
+            }
+            Request::Act { t, obs } => {
+                let action = bot.act(&obs);
+                println!("{}", json!({"type": "action", "t": t, "action": action}));
             }
         }
     }

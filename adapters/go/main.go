@@ -8,18 +8,38 @@ import (
 	"strings"
 )
 
-type Request struct {
-	Command     string `json:"command"`
-	HistorySelf []int  `json:"history_self"`
-	HistoryOpp  []int  `json:"history_opp"`
+const sdk = "go/0.2.0"
+
+type request struct {
+	Type    string `json:"type"`
+	Episode string `json:"episode"`
+	Seed    int64  `json:"seed"`
+	T       int64  `json:"t"`
+	Obs     any    `json:"obs"`
 }
 
-type StepResponse struct {
-	Action int `json:"action"`
+type readyResponse struct {
+	Type string `json:"type"`
+	SDK  string `json:"sdk"`
 }
 
-type StatusResponse struct {
-	Status string `json:"status"`
+type ackResponse struct {
+	Type    string `json:"type"`
+	Episode string `json:"episode"`
+}
+
+type actionResponse struct {
+	Type   string `json:"type"`
+	T      int64  `json:"t"`
+	Action any    `json:"action"`
+}
+
+func reply(message any) {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return
+	}
+	fmt.Println(string(data))
 }
 
 func main() {
@@ -32,19 +52,21 @@ func main() {
 			continue
 		}
 
-		var req Request
+		var req request
 		if err := json.Unmarshal([]byte(line), &req); err != nil {
+			fmt.Fprintln(os.Stderr, "arena-agent: ignoring malformed line")
 			continue
 		}
 
-		if req.Command == "RESET" {
-			bot.Reset()
-			resp, _ := json.Marshal(StatusResponse{Status: "OK"})
-			fmt.Println(string(resp))
-		} else {
-			action := bot.Step(req.HistorySelf, req.HistoryOpp)
-			resp, _ := json.Marshal(StepResponse{Action: action})
-			fmt.Println(string(resp))
+		switch req.Type {
+		case "hello":
+			reply(readyResponse{Type: "ready", SDK: sdk})
+		case "reset":
+			bot.Reset(req.Seed)
+			reply(ackResponse{Type: "ack", Episode: req.Episode})
+		case "act":
+			action := bot.Act(req.Obs)
+			reply(actionResponse{Type: "action", T: req.T, Action: action})
 		}
 	}
 }
